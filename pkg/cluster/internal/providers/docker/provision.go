@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -212,6 +213,17 @@ func commonArgs(cluster string, cfg *config.Cluster, networkName string, nodeNam
 	return args, nil
 }
 
+func device(str string) int {
+	if len(str) == 0 {
+		return 1
+	}
+	lastChar := str[len(str)-1]
+	if num, err := strconv.Atoi(string(lastChar)); err == nil {
+		return num
+	}
+	return 1
+}
+
 func runArgsForNode(node *config.Node, clusterIPFamily config.ClusterIPFamily, name string, args []string) ([]string, error) {
 	args = append([]string{
 		"--hostname", name, // make hostname match container name
@@ -238,6 +250,8 @@ func runArgsForNode(node *config.Node, clusterIPFamily config.ClusterIPFamily, n
 		"--volume", "/lib/modules:/lib/modules:ro",
 		// propagate KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER to the entrypoint script
 		"-e", "KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER",
+		// TODO(mathematikoi): !
+		"--device", fmt.Sprintf("/dev/sdc%d:/dev/petri", device(name)),
 	},
 		args...,
 	)
